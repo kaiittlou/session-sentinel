@@ -19,7 +19,7 @@ def load_data():
                 loaded = json.load(f)
                 data.update(loaded)
         except:
-            print("⚠️ Corrupted data.json — resetting")
+            print("Corrupted data.json — resetting")
     return data
 
 def save_data(data):

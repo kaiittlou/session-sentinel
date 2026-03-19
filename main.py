@@ -10,14 +10,14 @@ import random
 from detector import load_data, save_data, detect_time_anomaly, detect_impossible_travel
 from network import get_ip_info
 from tokens import find_discord_tokens
-from pync import Notifier  # macOS notifications
+from pync import Notifier  # macOs zzz
 
-TARGET_APPS = ["Discord", "Spotify", "Steam", "Firefox"]
+TARGET_APPS = ["Discord", "Spotify", "Steam", "Firefox"] # eventually change this to be configureable/ detect any open app not just check for these
 
 app = Flask(__name__)
 data = load_data()
 
-# ---------------- TIME ----------------
+# time
 def get_timestamp():
     now = datetime.now(ZoneInfo("Europe/London"))
     timezone = now.tzname()
@@ -32,14 +32,14 @@ def print_last_active(apps):
     sys.stdout.write("\r" + message)
     sys.stdout.flush()
 
-# ---------------- NOTIFICATIONS ----------------
+# notif 
 def notify(title, message):
     try:
         Notifier.notify(message, title=title)
     except:
         pass
 
-# ---------------- PROCESS MONITOR ----------------
+# process monitor 
 def get_running_apps():
     running = []
     for process in psutil.process_iter(['name']):
@@ -53,7 +53,7 @@ def get_running_apps():
             pass
     return list(set(running))
 
-# ---------------- ALERT ----------------
+# notif alert
 def add_alert(type_, message, severity="medium"):
     alert = {
         "type": type_,
@@ -65,7 +65,7 @@ def add_alert(type_, message, severity="medium"):
     print("\n⚠️ ALERT:", alert)
     notify("Session Sentinel", message)
 
-# ---------------- SIMULATED ATTACK ----------------
+# simulated attack for funsies
 def simulate_attack():
     fake_locations = [
         ("Berlin", "Germany"),
@@ -82,7 +82,7 @@ def simulate_attack():
         "critical"
     )
 
-# ---------------- MONITOR LOOP ----------------
+# monitoring loop :D
 def monitor():
     global data
     last_ip_data = None
@@ -127,7 +127,7 @@ def monitor():
 
         last_ip_data = ip_data
 
-        tokens = set(find_discord_tokens())
+        tokens = set(find_discord_tokens()) # getting this to actually work would be kewl looooollll
 
         if not known_tokens:
             known_tokens = tokens
@@ -140,7 +140,7 @@ def monitor():
 
 threading.Thread(target=monitor, daemon=True).start()
 
-# ---------------- ROUTES ----------------
+# routes 
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -154,6 +154,6 @@ def simulate():
     simulate_attack()
     return {"status": "attack simulated"}
 
-# ---------------- RUN ----------------
+# run 
 if __name__ == "__main__":
     app.run(debug=True, use_reloader=False)
