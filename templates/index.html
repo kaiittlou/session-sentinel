@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Session Sentinel</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="header">
+    <h1>🛡️ Session Sentinel</h1>
+</div>
+
+<div class="container">
+
+<button onclick="simulateAttack()" style="margin:20px; padding:10px; background:red; color:white; border:none; border-radius:8px;">
+    🚨 Simulate Attack
+</button>
+
+<div class="card">
+    <h2>📊 Apps</h2>
+    <div id="activity"></div>
+</div>
+
+<div class="card">
+    <h2>🚨 Alerts</h2>
+    <div id="alerts"></div>
+</div>
+
+</div>
+
+<script>
+async function loadData() {
+    const res = await fetch("/data");
+    const data = await res.json();
+    const now = Date.now() / 1000;
+
+    const activityDiv = document.getElementById("activity");
+    activityDiv.innerHTML = "";
+
+    for (const [app, info] of Object.entries(data.activity)) {
+        let status = "offline";
+        let color = "#9ca3af";
+
+        if (info.last_seen) {
+            const diff = now - info.last_seen;
+            if (diff < 15) {
+                status = "online";
+                color = "#22c55e";
+            } else if (diff < 60) {
+                status = "recently closed";
+                color = "#ef4444";
+            }
+        }
+
+        const el = document.createElement("div");
+        el.className = "card";
+
+        el.innerHTML = `
+            <strong style="font-size:18px;">${app}</strong><br>
+            Status: <span style="color:${color}; font-weight:bold;">${status}</span><br>
+            IP: ${info.ip}<br>
+            Location: ${info.city}, ${info.country}<br>
+            Last Active: ${info.last_active}
+        `;
+
+        activityDiv.appendChild(el);
+    }
+
+    const alertsDiv = document.getElementById("alerts");
+    alertsDiv.innerHTML = "";
+
+    data.alerts.slice(-10).reverse().forEach(alert => {
+        const el = document.createElement("div");
+        el.className = "alert " + alert.severity;
+        el.textContent = `${alert.time} - ${alert.message}`;
+        alertsDiv.appendChild(el);
+    });
+}
+
+async function simulateAttack() {
+    await fetch("/simulate");
+}
+
+setInterval(loadData, 2000);
+loadData();
+</script>
+
+</body>
+</html>
