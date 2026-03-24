@@ -1,52 +1,61 @@
 import json
 import os
-import math
 
-LOG_FILE = "data.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LOG_FILE = os.path.join(BASE_DIR, "data.json")
 
 def default_data():
     return {
         "activity": {},
+        "recently_used": {},
         "alerts": [],
-        "ip_history": []
+        "timeline": [],
+        "settings": {
+            "monitored_apps": ["Discord", "Spotify", "Steam", "Firefox"],
+            "dark_mode": False
+        },
+        "risk": {
+            "level": "low",
+            "score": 0,
+            "reasons": []
+        },
+        "monitoring": {
+            "active": True,
+            "last_heartbeat": None
+        }
     }
 
 def load_data():
     data = default_data()
+
     if os.path.exists(LOG_FILE):
         try:
             with open(LOG_FILE, "r") as f:
                 loaded = json.load(f)
-                data.update(loaded)
+
+            data["activity"] = loaded.get("activity") or {}
+            data["recently_used"] = loaded.get("recently_used") or {}
+            data["alerts"] = loaded.get("alerts") or []
+            data["timeline"] = loaded.get("timeline") or []
+
+            loaded_settings = loaded.get("settings") or {}
+            data["settings"]["monitored_apps"] = loaded_settings.get("monitored_apps") or ["Discord", "Spotify", "Steam", "Firefox"]
+            data["settings"]["dark_mode"] = loaded_settings.get("dark_mode", False)
+
+            loaded_risk = loaded.get("risk") or {}
+            data["risk"]["level"] = loaded_risk.get("level", "low")
+            data["risk"]["score"] = loaded_risk.get("score", 0)
+            data["risk"]["reasons"] = loaded_risk.get("reasons") or []
+
+            loaded_monitoring = loaded.get("monitoring") or {}
+            data["monitoring"]["active"] = loaded_monitoring.get("active", True)
+            data["monitoring"]["last_heartbeat"] = loaded_monitoring.get("last_heartbeat")
+            
         except:
-            print("Corrupted data.json — resetting")
+            return default_data()
+
     return data
 
 def save_data(data):
     with open(LOG_FILE, "w") as f:
         json.dump(data, f, indent=4)
-
-def detect_time_anomaly(app, hour, data):
-    if app not in data["activity"]:
-        return False
-    hours = data["activity"][app].get("hours", [])
-    if len(hours) < 5:
-        return False
-    avg = sum(hours) / len(hours)
-    return abs(hour - avg) > 6
-
-def detect_impossible_travel(old, new):
-    try:
-        if not old or not new:
-            return False
-        if "lat" not in old or "lat" not in new:
-            return False
-        if old["lat"] is None or new["lat"] is None:
-            return False
-        distance = math.sqrt(
-            (old["lat"] - new["lat"])**2 +
-            (old["lon"] - new["lon"])**2
-        )
-        return distance > 20
-    except:
-        return False
